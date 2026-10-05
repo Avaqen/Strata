@@ -1,0 +1,21 @@
+.public-demo-notice {
+  margin: 0 0 18px;
+  padding: 12px 15px;
+  border: 1px solid #b9dbbd;
+  border-radius: 9px;
+  background: #eaf7e9;
+  color: #36583c;
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.public-demo-notice strong {
+  margin-right: 5px;
+  color: #20502d;
+}
+
+.live-toolbar,
+#upload-trigger,
+#traffic-upload-trigger {
+  display: none !important;
+}
