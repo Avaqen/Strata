@@ -3,8 +3,5 @@ services:
     name: strata-demo
     runtime: python
     plan: free
-    buildCommand: python3 -m compileall -q app.py sensor.py
-    startCommand: python3 app.py --host 0.0.0.0 --port $PORT
-    envVars:
-      - key: STRATA_DEMO_MODE
-        value: "true"
+    buildCommand: python3 -m compileall -q app.py sensor.py demo_server.py
+    startCommand: python3 demo_server.py --port $PORT
