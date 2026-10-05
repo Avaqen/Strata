@@ -121,6 +121,14 @@ Numeric features use a median/MAD robust outlier score (with an IQR fallback); p
 
 This is a useful local monitoring and triage baseline, **not a guarantee of detecting every threat or a certified production NDR/IDS**. False positives and missed attacks are possible, especially with encrypted traffic, unsupported frame types, short baselines, or incomplete visibility. It does not block traffic, alert externally, persist an audit history, or support multi-user access. Keep it local; a remote deployment needs a separately secured, authenticated TLS front end and an authorized network telemetry source.
 
+## Free public demo
+
+The Render blueprint in [`render.yaml`](render.yaml) configures a free-tier, public demo using the separate [`demo_server.py`](demo_server.py) entry point. The hosted version uses synthetic sample traffic only: live-capture endpoints and CSV imports are disabled, and visitor-provided flow records are never analyzed. Render free web services can spin down when idle, so the first visit after inactivity may take a little time to load.
+
+To deploy it, sign in to [Render](https://render.com), authorize access to this private GitHub repository, and create a Blueprint from `Avaqen/Strata`. Render reads `render.yaml` and provisions the service. Add the resulting `onrender.com` URL here once deployment is complete. A Render account and permission to connect this repository are required; no API keys or application secrets are needed.
+
+[Open Render to deploy the free demo](https://render.com/deploy?repo=https://github.com/Avaqen/Strata)
+
 ## Test
 
 Run the unit tests from the project directory:

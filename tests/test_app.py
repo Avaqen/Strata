@@ -8,12 +8,13 @@ from threading import Thread
 
 import app
 import sensor
+import demo_server
 
 
 def ipv4_tcp_frame(source="192.168.1.10", destination="1.1.1.1", source_port=51000, destination_port=443, flags=0x18):
     tcp = struct.pack("!HHIIHHHH", source_port, destination_port, 1, 0, (5 << 12) | flags, 8192, 0, 0)
     total_length = 20 + len(tcp)
-    ip = struct.pack("!BBHHHBBH4s4s", 0x45, 0, total_length, 1, 0, 64, 6, 0, socket.inet_aton(source), socket.inet_aton(destination))
+    ip = struct.pack("!BBHHHBB4s4s", 0x45, 0, total_length, 1, 0, 64, 6, 0, socket.inet_aton(source), socket.inet_aton(destination))
     ethernet = bytes.fromhex("00112233445566778899aabb0800")
     return ethernet + ip + tcp
 
@@ -212,6 +213,90 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(response.status, 400)
         self.assertIn("more fields", json.loads(response.read())["error"])
         connection.close()
+
+
+class PublicDemoTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.server = demo_server.ThreadedDemoServer(("127.0.0.1", 0), demo_server.DemoHandler)
+        cls.thread = Thread(target=cls.server.serve_forever, daemon=True)
+        cls.thread.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.shutdown()
+        cls.server.server_close()
+        cls.thread.join()
+
+    def setUp(self):
+        self.connection = HTTPConnection("127.0.0.1", self.server.server_port)
+        self.headers = {"Host": "strata.example", "Origin": "https://strata.example"}
+
+    def tearDown(self):
+        self.connection.close()
+
+    def test_public_page_disables_live_and_import_controls(self):
+        self.connection.request("GET", "/", headers=self.headers)
+        response = self.connection.getresponse()
+        page = response.read().decode()
+        self.assertEqual(response.status, 200)
+        self.assertIn("Public demo", page)
+        self.assertIn("SYNTHETIC DATA ONLY", page)
+        self.assertIn('href="/demo.css"', page)
+        self.assertIn("Demo uses synthetic traffic only", page)
+
+        self.connection.request("GET", "/demo.css", headers=self.headers)
+        response = self.connection.getresponse()
+        self.assertEqual(response.status, 200)
+        self.assertIn("#traffic-upload-trigger", response.read().decode())
+
+    def test_demo_analyzes_only_server_generated_sample(self):
+        self.connection.request("GET", "/api/config", headers=self.headers)
+        response = self.connection.getresponse()
+        self.assertEqual(json.loads(response.read()), {"demo_mode": True})
+
+        payload = json.dumps({"rows": [{"src_ip": "attacker-data"}], "threshold": 72})
+        self.connection.request(
+            "POST",
+            "/api/analyze",
+            payload,
+            {"Content-Type": "application/json", **self.headers},
+        )
+        response = self.connection.getresponse()
+        result = json.loads(response.read())
+        self.assertEqual(response.status, 200)
+        self.assertEqual(result["summary"]["total_flows"], 64)
+
+        self.connection.request(
+            "POST",
+            "/api/analyze",
+            json.dumps({"csv": "packets\n1\n"}),
+            {"Content-Type": "application/json", **self.headers},
+        )
+        response = self.connection.getresponse()
+        self.assertEqual(response.status, 400)
+
+    def test_live_capture_and_cross_origin_requests_are_rejected(self):
+        self.connection.request("GET", "/api/live/interfaces", headers=self.headers)
+        response = self.connection.getresponse()
+        self.assertEqual(response.status, 404)
+
+        self.connection.request(
+            "POST",
+            "/api/live/start",
+            json.dumps({"interface": "lo"}),
+            {"Content-Type": "application/json", **self.headers},
+        )
+        response = self.connection.getresponse()
+        self.assertEqual(response.status, 404)
+
+        self.connection.request(
+            "GET",
+            "/api/health",
+            headers={"Host": "strata.example", "Origin": "https://attacker.example"},
+        )
+        response = self.connection.getresponse()
+        self.assertEqual(response.status, 403)
 
 
 if __name__ == "__main__":
