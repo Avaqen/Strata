@@ -14,7 +14,7 @@ import demo_server
 def ipv4_tcp_frame(source="192.168.1.10", destination="1.1.1.1", source_port=51000, destination_port=443, flags=0x18):
     tcp = struct.pack("!HHIIHHHH", source_port, destination_port, 1, 0, (5 << 12) | flags, 8192, 0, 0)
     total_length = 20 + len(tcp)
-    ip = struct.pack("!BBHHHBB4s4s", 0x45, 0, total_length, 1, 0, 64, 6, 0, socket.inet_aton(source), socket.inet_aton(destination))
+    ip = struct.pack("!BBHHHBBH4s4s", 0x45, 0, total_length, 1, 0, 64, 6, 0, socket.inet_aton(source), socket.inet_aton(destination))
     ethernet = bytes.fromhex("00112233445566778899aabb0800")
     return ethernet + ip + tcp
 
