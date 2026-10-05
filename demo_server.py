@@ -84,6 +84,16 @@ class DemoHandler(app.Handler):
                     1,
                 )
                 body = page.encode("utf-8")
+            elif path == "/app.js":
+                source = body.decode("utf-8")
+                initialization = "initializeLive();"
+                if source.count(initialization) != 1:
+                    raise RuntimeError("Could not safely configure the public demo startup.")
+                body = source.replace(
+                    initialization,
+                    '$("refresh-btn").click();',
+                    1,
+                ).encode("utf-8")
             suffix = target.suffix
             content_type = {
                 ".html": "text/html; charset=utf-8",

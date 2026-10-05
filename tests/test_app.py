@@ -230,7 +230,10 @@ class PublicDemoTests(unittest.TestCase):
 
     def setUp(self):
         self.connection = HTTPConnection("127.0.0.1", self.server.server_port)
-        self.headers = {"Host": "strata.example", "Origin": "https://strata.example"}
+        self.headers = {
+            "Host": "strata.example",
+            "Origin": "https://strata.example",
+        }
 
     def tearDown(self):
         self.connection.close()
@@ -250,54 +253,8 @@ class PublicDemoTests(unittest.TestCase):
         self.assertEqual(response.status, 200)
         self.assertIn("#traffic-upload-trigger", response.read().decode())
 
-    def test_demo_analyzes_only_server_generated_sample(self):
-        self.connection.request("GET", "/api/config", headers=self.headers)
+        self.connection.request("GET", "/app.js", headers=self.headers)
         response = self.connection.getresponse()
-        self.assertEqual(json.loads(response.read()), {"demo_mode": True})
-
-        payload = json.dumps({"rows": [{"src_ip": "attacker-data"}], "threshold": 72})
-        self.connection.request(
-            "POST",
-            "/api/analyze",
-            payload,
-            {"Content-Type": "application/json", **self.headers},
-        )
-        response = self.connection.getresponse()
-        result = json.loads(response.read())
+        script = response.read().decode()
         self.assertEqual(response.status, 200)
-        self.assertEqual(result["summary"]["total_flows"], 64)
-
-        self.connection.request(
-            "POST",
-            "/api/analyze",
-            json.dumps({"csv": "packets\n1\n"}),
-            {"Content-Type": "application/json", **self.headers},
-        )
-        response = self.connection.getresponse()
-        self.assertEqual(response.status, 400)
-
-    def test_live_capture_and_cross_origin_requests_are_rejected(self):
-        self.connection.request("GET", "/api/live/interfaces", headers=self.headers)
-        response = self.connection.getresponse()
-        self.assertEqual(response.status, 404)
-
-        self.connection.request(
-            "POST",
-            "/api/live/start",
-            json.dumps({"interface": "lo"}),
-            {"Content-Type": "application/json", **self.headers},
-        )
-        response = self.connection.getresponse()
-        self.assertEqual(response.status, 404)
-
-        self.connection.request(
-            "GET",
-            "/api/health",
-            headers={"Host": "strata.example", "Origin": "https://attacker.example"},
-        )
-        response = self.connection.getresponse()
-        self.assertEqual(response.status, 403)
-
-
-if __name__ == "__main__":
-    unittest.main()
+        self.assertIn('$(

@@ -2,6 +2,12 @@
 
 Strata is a local-first network-flow dashboard with live Linux interface capture, CSV flow analysis, configurable anomaly scoring, and an in-browser alert table. Its responsive interface has dedicated Overview, Traffic Analysis, and Anomaly Center views that share the current analysis. It uses only the Python standard library. The live sensor extracts packet and flow metadata; it does not save packet payloads or PCAP files.
 
+## Live demo
+
+**[Open the Strata interactive demo](https://strata-demo-lepa.onrender.com/)**
+
+The public demo automatically loads a synthetic flow dataset so the dashboard is populated on arrival. Live packet capture and CSV uploads are intentionally disabled on the hosted demo; use the local installation below for those features.
+
 ## Run locally
 
 Requires Python 3.10 or newer.
@@ -121,13 +127,13 @@ Numeric features use a median/MAD robust outlier score (with an IQR fallback); p
 
 This is a useful local monitoring and triage baseline, **not a guarantee of detecting every threat or a certified production NDR/IDS**. False positives and missed attacks are possible, especially with encrypted traffic, unsupported frame types, short baselines, or incomplete visibility. It does not block traffic, alert externally, persist an audit history, or support multi-user access. Keep it local; a remote deployment needs a separately secured, authenticated TLS front end and an authorized network telemetry source.
 
-## Free public demo
+## Public demo deployment
 
-The Render blueprint in [`render.yaml`](render.yaml) configures a free-tier, public demo using the separate [`demo_server.py`](demo_server.py) entry point. The hosted version uses synthetic sample traffic only: live-capture endpoints and CSV imports are disabled, and visitor-provided flow records are never analyzed. Render free web services can spin down when idle, so the first visit after inactivity may take a little time to load.
+The live demo runs on Render's free web-service plan using the separate [`demo_server.py`](demo_server.py) entry point configured by [`render.yaml`](render.yaml). It uses synthetic sample traffic only: live-capture endpoints and CSV imports are disabled, and visitor-provided flow records are never analyzed. Render may spin down a free service after inactivity, so the first visit after a quiet period can take around a minute to wake up.
 
-To deploy it, sign in to [Render](https://render.com), authorize access to this private GitHub repository, and create a Blueprint from `Avaqen/Strata`. Render reads `render.yaml` and provisions the service. Add the resulting `onrender.com` URL here once deployment is complete. A Render account and permission to connect this repository are required; no API keys or application secrets are needed.
+The Render Blueprint is connected to the private [`Avaqen/Strata`](https://github.com/Avaqen/Strata) repository and deploys from `main`. To manage the service, visit the [Render dashboard](https://dashboard.render.com/web/srv-db20flom7kps73e3e5kg). No application API keys or secrets are required.
 
-[Open Render to deploy the free demo](https://render.com/deploy?repo=https://github.com/Avaqen/Strata)
+The live service exposes a health check at <https://strata-demo-lepa.onrender.com/api/health>. The demo API mode can be confirmed at <https://strata-demo-lepa.onrender.com/api/config>.
 
 ## Test
 
